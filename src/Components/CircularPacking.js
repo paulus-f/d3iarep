@@ -41,17 +41,17 @@ const CircularPacking = () => {
                         .style('border-radius', '5px')
                         .style('padding', '5px');
       
-        let mouseover = function(e, d) {
+        let mouseover = (e, d) => {
           Tooltip.style('opacity', 1);
         }
 
-        let mousemove = function(m, d) {
+        let mousemove = (m, d) => {
           Tooltip.html(`<u> ${d['Country/Region']} </u> <br> ${d[dataDate]} cases`)
                  .style('left', (m.pageX + 20) + 'px')
                  .style('top', m.pageY + 'px');
         }
 
-        let mouseleave = function(e, d) {
+        let mouseleave = (e, d) => {
           Tooltip.style('opacity', 0);
         }
 
@@ -61,10 +61,10 @@ const CircularPacking = () => {
                       .enter()
                       .append('circle')
                         .attr('class', 'node')
-                        .attr('r', function(d){ return size(Number(d[dataDate]))})
+                        .attr('r', (d) => size(Number(d[dataDate])))
                         .attr('cx', width / 2)
                         .attr('cy', height / 2)
-                        .style('fill', function(d){ return color(d['Country/Region'])})
+                        .style('fill', (d) => color(d['Country/Region']))
                         .style('fill-opacity', 0.8)
                         .attr('stroke', 'black')
                         .style('stroke-width', 1)
@@ -78,12 +78,12 @@ const CircularPacking = () => {
         var simulation = d3.forceSimulation()
                            .force('center', d3.forceCenter().x(width / 2).y(height / 2))
                            .force('charge', d3.forceManyBody().strength(.1))
-                           .force('collide', d3.forceCollide().strength(.2).radius(function(d){ return (size(d[dataDate])+3) }).iterations(1));
+                           .force('collide', d3.forceCollide().strength(.2).radius((d) => size(d[dataDate])+3).iterations(1));
       
         simulation.nodes(data)
-                  .on('tick', function(d) {
-                    node.attr('cx', function(d){ return d.x; })
-                        .attr('cy', function(d){ return d.y; });
+                  .on('tick', (d) => {
+                    node.attr('cx', (d) => d.x)
+                        .attr('cy', (d) => d.y);
                   });
 
         function dragstarted(e, d) {
