@@ -28,8 +28,8 @@ const CircularPacking = () => {
                       .range(d3.schemeSet1);
 
         let size = d3.scaleLinear()
-                     .domain([0, 50_000_000])
-                     .range([7,55]);
+                     .domain([0, 30_000_000])
+                     .range([2,100]);
 
         let Tooltip = d3.select('#box')
                         .append('div')
