@@ -4,88 +4,88 @@ import * as d3 from 'd3';
 import {event as currentEvent} from 'd3';
 import '../App.css';
 import { useD3 } from '../Utils/UseD3';
+import * as moment from 'moment';
 
-const CircularPacking = ({ data }) => {
+const CircularPacking = () => {
   const ref = useD3(
     (svg) => {
       const height = 800;
       const width = 800;
 
-      svg.attr("width", width)
-         .attr("height", height)
+      svg.attr('width', width)
+         .attr('height', height);
 
-      d3.csv('https://raw.githubusercontent.com/holtzy/data_to_viz/master/Example_dataset/11_SevCatOneNumNestedOneObsPerGroup.csv').then((data) => {
-
-        // Filter a bit the data -> more than 1 million inhabitants
-        data = data.filter((d) => { return d.value>10000000 });
-
+      const csv_link = 'https://data.humdata.org/hxlproxy/api/data-preview.csv?url=https%3A%2F%2Fraw.githubusercontent.com%2FCSSEGISandData%2FCOVID-19%2Fmaster%2Fcsse_covid_19_data%2Fcsse_covid_19_time_series%2Ftime_series_covid19_confirmed_global.csv&filename=time_series_covid19_confirmed_global.csv';
+      const example_link = 'https://raw.githubusercontent.com/holtzy/data_to_viz/master/Example_dataset/11_SevCatOneNumNestedOneObsPerGroup.csv';
+      let dataDate = new Date();
+      dataDate.setDate(dataDate.getDate() - 1);
+      dataDate = moment(dataDate).format('M/D/YY');
+      // READING CSV /////////////////////////////////////////////////
+      d3.csv(csv_link).then((data) => {
+        let contries = data.map(d => d['Country/Region']); 
         let color = d3.scaleOrdinal()
-                      .domain(["Asia", "Europe", "Africa", "Oceania", "Americas"])
+                      .domain(contries)
                       .range(d3.schemeSet1);
 
         let size = d3.scaleLinear()
-                     .domain([0, 1400000000])
-                     .range([7,55])  // circle will be between 7 and 55 px wide
+                     .domain([0, 50_000_000])
+                     .range([7,55]);
 
-        // create a tooltip
-        let Tooltip = svg.append("div")
-                         .style("opacity", 0)
-                         .attr("class", "tooltip")
-                         .style("background-color", "white")
-                         .style("border", "solid")
-                         .style("border-width", "2px")
-                         .style("border-radius", "5px")
-                         .style("padding", "5px")
+        let Tooltip = d3.select('#box')
+                        .append('div')
+                        .style('opacity', 0)
+                        .attr('class', 'tooltip')
+                        .style('background-color', 'white')
+                        .style('border', 'solid')
+                        .style('border-width', '2px')
+                        .style('border-radius', '5px')
+                        .style('padding', '5px');
       
-        // Three function that change the tooltip when user hover / move / leave a cell
-        var mouseover = function(e, d) {
-          Tooltip.style("opacity", 1)
+        let mouseover = function(e, d) {
+          Tooltip.style('opacity', 1);
         }
-        var mousemove = function(m, d) {
-          Tooltip
-            .html('<u>' + d.key + '</u>' + "<br>" + d.value + " inhabitants")
-            .style("left", (m.pageX + 20) + "px")
-            .style("top", m.pageY + "px")
+
+        let mousemove = function(m, d) {
+          Tooltip.html(`<u> ${d['Country/Region']} </u> <br> ${d[dataDate]} cases`)
+                 .style('left', (m.pageX + 20) + 'px')
+                 .style('top', m.pageY + 'px');
         }
-        var mouseleave = function(e, d) {
-          Tooltip
-            .style("opacity", 0)
+
+        let mouseleave = function(e, d) {
+          Tooltip.style('opacity', 0);
         }
-    
-        // Initialize the circle: all located at the center of the svg area
-        var node = svg.append("g")
-          .selectAll("circle")
-          .data(data)
-          .enter()
-          .append("circle")
-            .attr("class", "node")
-            .attr("r", function(d){ return size(d.value)})
-            .attr("cx", width / 2)
-            .attr("cy", height / 2)
-            .style("fill", function(d){ return color(d.region)})
-            .style("fill-opacity", 0.8)
-            .attr("stroke", "black")
-            .style("stroke-width", 1)
-            .on("mouseover", mouseover)
-            .on("mousemove", mousemove)
-            .on("mouseleave", mouseleave)
-            .call(d3.drag().on("start", dragstarted)
-                           .on("drag", dragged)
-                           .on("end", dragended));
-      
-        // Features of the forces applied to the nodes:
+
+        var node = svg.append('g')
+                      .selectAll('circle')
+                      .data(data)
+                      .enter()
+                      .append('circle')
+                        .attr('class', 'node')
+                        .attr('r', function(d){ return size(Number(d[dataDate]))})
+                        .attr('cx', width / 2)
+                        .attr('cy', height / 2)
+                        .style('fill', function(d){ return color(d['Country/Region'])})
+                        .style('fill-opacity', 0.8)
+                        .attr('stroke', 'black')
+                        .style('stroke-width', 1)
+                        .on('mouseover', mouseover)
+                        .on('mousemove', mousemove)
+                        .on('mouseleave', mouseleave)
+                        .call(d3.drag().on('start', dragstarted)
+                                       .on('drag', dragged)
+                                       .on('end', dragended));
+
         var simulation = d3.forceSimulation()
-                           .force("center", d3.forceCenter().x(width / 2).y(height / 2)) // Attraction to the center of the svg area
-                           .force("charge", d3.forceManyBody().strength(.1)) // Nodes are attracted one each other of value is > 0
-                           .force("collide", d3.forceCollide().strength(.2).radius(function(d){ return (size(d.value)+3) }).iterations(1)) // Force that avoids circle overlapping
+                           .force('center', d3.forceCenter().x(width / 2).y(height / 2))
+                           .force('charge', d3.forceManyBody().strength(.1))
+                           .force('collide', d3.forceCollide().strength(.2).radius(function(d){ return (size(d[dataDate])+3) }).iterations(1));
       
         simulation.nodes(data)
                   .on('tick', function(d) {
-                    node.attr("cx", function(d){ return d.x; })
-                        .attr("cy", function(d){ return d.y; })
+                    node.attr('cx', function(d){ return d.x; })
+                        .attr('cy', function(d){ return d.y; });
                   });
-      
-        // What happens when a circle is dragged?
+
         function dragstarted(e, d) {
           if (!e.active)
             simulation.alphaTarget(.03).restart();
@@ -106,11 +106,11 @@ const CircularPacking = ({ data }) => {
         }
       });
     },
-    [data.length]
+    []
   );
 
   return (
-    <div>
+    <div id='box'>
       <svg
         ref={ref}
       />
